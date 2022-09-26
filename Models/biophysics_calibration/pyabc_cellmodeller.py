@@ -30,8 +30,7 @@ sys.path.append(os.path.join(os.path.expanduser('~'), 'CellModeller/Scripts/summ
 import anisotropy
 import aspect_ratio
 import density_calculation
-import growth_rate_stats
-import spatial_analysis
+import growth_rate_analysis
 sys.path.append(os.path.join(os.path.expanduser('~'), 'CellModeller/Scripts/summaryStatistics/'))
 import helperFunctions
 
@@ -58,12 +57,12 @@ def model(parameters):
     
     # Calculate summary statistics
     summary_stats = {}
-    summary_stats['growth_rate_vs_centroid'] = spatial_analysis.get_growth_rate_vs_position(dt, cells, bin_radius=4)
-    summary_stats['density_parameter'] = density_calculation.main(cells, fig_export_path='')
+    summary_stats['growth_rate_vs_centroid'] = growth_rate_analysis.main(cells, dt)
+    summary_stats['density_parameter'] = density_calculation.main(cells)
     summary_stats['order_parameter'] = anisotropy.main(cells)
-    summary_stats['aspect_ratio'] = aspect_ratio.get_aspect_ratio(cells)
+    summary_stats['aspect_ratio'] = aspect_ratio.main(cells)
     
-    # Write summary stats to file for convenience
+    # Write summary stats to file for convenience (optional) 
     file = open(export_path + "/summary_stats.txt","w")
     for key, value in summary_stats.items(): 
         file.write('%s: %.3f\n' % (key, value)) 
@@ -118,7 +117,6 @@ def distance_calculation(sim_stats, exp_stats):
     @param  exp_stats   Dict of experimental summary statistics
     @return distance    Euclidean distance between simuluations and experiment
     """
-
     distance_list = []
     for x in sim_stats.keys():
         diff = np.abs(sim_stats[x] - exp_stats[x])
@@ -157,9 +155,6 @@ if __name__ == '__main__':
     # create instance of `Distribution` class
     prior = pyabc.Distribution()
     prior = prior.from_dictionary_of_dictionaries(prior_distributions)
-       
-    # Define distance metric
-    #distance = pyabc.PNormDistance(p=2) # p=2: Euclidean distance
     
     # Create abc model
     abc = pyabc.ABCSMC(model, 
