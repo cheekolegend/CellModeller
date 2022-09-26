@@ -40,7 +40,7 @@ def convert_cellmodeller_orientation_to_radians(cell_dir):
     
     return orientation
     
-def get_cell_data_to_draw_image_bw(cells, um_pixel_ratio=0.144):
+def get_cell_data_to_draw_image_bw(cells, um_pixel_ratio):
     """
     Convert CellModeller data into a format suitable for drawing black/white images
     
@@ -203,7 +203,7 @@ def calculate_colony_density(img, fig_export_path=''):
     
     return density
     
-def main(cells, fig_export_path=''):
+def main(cells, um_pixel_ratio=0.144, fig_export_path=''):
     """
     The main function for calculating colony density
     
@@ -212,7 +212,7 @@ def main(cells, fig_export_path=''):
     @return density         colony density parameter (1 = colony is completely filled in)
     """
     # Obtain cell data in format suitable for creating black/white images
-    cell_centers_x, cell_centers_y, cell_lengths, cell_radii, cell_orientations = get_cell_data_to_draw_image_bw(cells, um_pixel_ratio=0.144)    
+    cell_centers_x, cell_centers_y, cell_lengths, cell_radii, cell_orientations = get_cell_data_to_draw_image_bw(cells, um_pixel_ratio)    
             
     # Create image dimensions
     img_dimensions = get_image_dimensions(cell_centers_x, cell_centers_y)

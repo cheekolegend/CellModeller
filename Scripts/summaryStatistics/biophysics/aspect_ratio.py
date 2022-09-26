@@ -38,9 +38,10 @@ def calc_aspect_ratio(a, b):
 
     return aspect_ratio
 
-def get_aspect_ratio(cells):
+def main(cells):
     """
-    The main function that finds the aspect ratio of a colony
+    The main function that finds the aspect ratio of a colony.
+    To be called by pyabc.
     
     @param  cells   cellStates dict
     @param  center  center of the fitted ellipse (x, y)
@@ -63,5 +64,16 @@ def get_aspect_ratio(cells):
     
     return aspect_ratio   
     
+if __name__ == '__main__':    
+    '''
+    For testing purposes only
+    '''
+    # Load cellStates
+    pickle_full_path = 'step-00420.pickle'
+    data = pickle.load(open(pickle_full_path, 'rb'))
+    cells = data['cellStates']   
+    
+    aspect_ratio = main(cells)
+    print(aspect_ratio)
     
     
