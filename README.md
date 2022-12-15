@@ -31,5 +31,8 @@ def setparams(param_dict):
 
 This defines which parameters will be calibrated. Afterwards, setup the the [ABC simulation script](Examples/AaronYip/pyabc_cellmodeller/pyabc_cellmodeller.py) in a similar fashion to the tutorials in the [pyabc documentation](https://pyabc.readthedocs.io/en/latest/examples/parameter_inference.html)
 
+## Adhesion Module
+The adhesion module originally published by [Kan et al. (2018)](https://doi.org/10.1098/rsif.2018.0406) has been updated to work with the current biophysics module. Adhesion to walls has been added as a new feature. See the [example simulations](Examples/AaronYip/adhesion) for more information.
+
 ## Degradation of Extracellular Molecules
 A term for reaction has been added to the [Signalling module](https://github.com/cheekolegend/CellModeller/blob/master/CellModeller/Signalling/GridDiffusion.py).
