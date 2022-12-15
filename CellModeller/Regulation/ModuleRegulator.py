@@ -44,13 +44,18 @@ class ModuleRegulator:
         nCells = len(csv)
         for i in range(nCells):
             levels[i,:] = csv[i].species
+            
+    # For adhesion module
+    def adhLogicCL(self):
+        return self.module.adhLogicCL()
 
     def step(self, dt=0):
         try:
             self.module.update(self.cellStates)
-        except Exception as e:
-            print("Problem with regulation module " + self.modName)
-            print(e)
+        except: #Exception as e:
+            self.module.update(self.sim, self.cellStates) 
+            #print("Problem with regulation module " + self.modName)
+            #print(e)
 
     def divide(self, pState, d1State, d2State):
         # Call the module's optional divide function

@@ -1,8 +1,8 @@
 
 class CellState:
     # Don't show these attributes in gui
-    excludeAttr = ['id', 'divideFlag', 'ends','cellAdh']
-
+    #excludeAttr = ['id', 'divideFlag', 'ends','cellAdh']
+    excludeAttr = ['id', 'divideFlag', 'ends']
     def __init__(self, cid):
         self.id = cid
         self.growthRate = 1.0
@@ -12,5 +12,6 @@ class CellState:
         self.neighbours = []
         self.effGrowth = 0.0
         self.deathFlag = False
-        self.hgt_events = 0
+        #self.hgt_events = 0
         #self.antibiotic_tick = 0
+        self.cellAdh = 1
