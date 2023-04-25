@@ -70,6 +70,9 @@ A function called setparams must be included in the module file, and the paramet
         self.renderers = []
         self.stepNum = 0
         self.lineage = {}
+        
+        # Horizontal gene transfer storage variables -AY
+        self.hgt_events = {} #{recip_id: (stepNum, donor_id), ...}
 
         # Time step
         self.dt = dt
@@ -463,6 +466,10 @@ A function called setparams must be included in the module file, and the paramet
         data['lineage'] = self.lineage
         data['moduleStr'] = self.moduleOutput
         data['moduleName'] = self.moduleName
+        
+        if self.hgt_events: #-AY
+            data['hgt_events'] = self.hgt_events
+            
         if self.integ:
         #    print("Writing new pickle format")
             data['specData'] = self.integ.levels
@@ -475,7 +482,8 @@ A function called setparams must be included in the module file, and the paramet
             data['sigData'] = self.integ.cellSigLevels
             data['sigGrid'] = self.integ.signalLevel
         pickle.dump(data, outfile, protocol=-1)
-        #output csv file with cell pos,dir,len - sig?
+        
+        #output csv file with cell pos,dir,len - sig?                   
 
     # Populate simulation from saved data pickle
     def loadGeometryFromPickle(self, data):
