@@ -28,7 +28,7 @@ def conjugation_basic(sim, cells, cell, conj_per_t, dt, rfp_intensities, colors)
             recip = cells[neigh]
             
             if recip.cellType == 'recip': #if a recipient
-                convert_to_transconjugant(recip, sim, neigh, rfp_intensities, colors)
+                convert_to_transconjugant(cell, recip, sim, rfp_intensities, colors)
                 
 def conjugation_contact(sim, cells, cell, conj_per_t, dt, rfp_intensities, colors):
     """
@@ -64,7 +64,7 @@ def conjugation_contact(sim, cells, cell, conj_per_t, dt, rfp_intensities, color
             
             # Convert to transconjugant if selected cell is a recipient type
             if recip.cellType == 'recip': #if a recipient
-                convert_to_transconjugant(recip, sim, neigh, rfp_intensities, colors)
+                convert_to_transconjugant(cell, recip, sim, rfp_intensities, colors)
                 
 def conjugation_delay(sim, cells, cell, conj_per_t, dt, rfp_intensities, colors,
                       delay_mean, delay_std):
@@ -80,7 +80,6 @@ def conjugation_delay(sim, cells, cell, conj_per_t, dt, rfp_intensities, colors,
     @param cell         cellstate object
     @param conj_per_t   conjugation events per donor-recipient contact per time
     """
-   
     conj_prob = conj_per_t*dt
  
     if len(cell.neighbours) > 0 and (cell.cellType == 'donor' or cell.cellType == 'trans'): #if a donor
@@ -93,17 +92,18 @@ def conjugation_delay(sim, cells, cell, conj_per_t, dt, rfp_intensities, colors,
             recip = cells[neigh]
             
             if recip.cellType == 'recip':
-                convert_to_transconjugant(recip, sim, neigh, rfp_intensities, colors)
+                convert_to_transconjugant(cell, recip, sim, rfp_intensities, colors)
                 recip.conj_time = recip.time
                 
 #TODO: code for transitory-derepression of new transconjugants
                 
-def convert_to_transconjugant(recip, sim, neigh, rfp_intensities, colors):
+def convert_to_transconjugant(donor, recip, sim, rfp_intensities, colors):
     recip.cellType = 'trans'
     recip.rfp_intensity = rfp_intensities[recip.cellType]
     recip.transconjugant_flag = 1
     recip.color = colors[recip.cellType]
-    sim.hgt_events[neigh] = {'stepNum':sim.stepNum, 'recip_id':neigh, 'donor_id':id} #{recip_id: (stepNum, donor_id), ...}    
+    sim.hgt_events[sim.stepNum]['recip_id'].append(recip.id) # Need to have this initialized outside of loop in update function: hgt_events[sim.stepNum] = {'donor_id': [], 'recip_id': []}
+    sim.hgt_events[sim.stepNum]['donor_id'].append(donor.id)
     
 def convert_cellmodeller_orientation_to_radians(cell_dir):
     """
