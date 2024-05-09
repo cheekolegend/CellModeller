@@ -102,8 +102,9 @@ def convert_to_transconjugant(donor, recip, sim, rfp_intensities, colors):
     recip.rfp_intensity = rfp_intensities[recip.cellType]
     recip.transconjugant_flag = 1
     recip.color = colors[recip.cellType]
-    sim.hgt_events[sim.stepNum]['recip_id'].append(recip.id) # Need to have this initialized outside of loop in update function: hgt_events[sim.stepNum] = {'donor_id': [], 'recip_id': []}
-    sim.hgt_events[sim.stepNum]['donor_id'].append(donor.id)
+    sim.hgt_events['stepNum'].append(sim.stepNum) # Need to have this initialized outside of loop in update function: hgt_events[sim.stepNum] = {'donor_id': [], 'recip_id': []}
+    sim.hgt_events['donor_id'].append(donor.id)
+    sim.hgt_events['recip_id'].append(recip.id)
     
 def convert_cellmodeller_orientation_to_radians(cell_dir):
     """

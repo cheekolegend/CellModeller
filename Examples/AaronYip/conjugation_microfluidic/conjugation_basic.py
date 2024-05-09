@@ -62,6 +62,7 @@ cell_property_dict = import_initial_properties(csv_file)
 
 def setup(sim):
     sim.dt = dt
+    sim.hgt_events = {'stepNum': [], 'donor_id': [], 'recip_id': []}
     
     # Set biophysics module
     biophys = CLBacterium(sim, jitter_z=False, max_planes=3, gamma=100, max_cells=30000, cgs_tol=1E-5, compNeighbours=True, max_contacts=36)
@@ -92,7 +93,6 @@ def setup(sim):
 def init(cell):
     cell.targetVol = cell_property_dict[cell.id]['targetVol']
     cell.growthRate = cell_property_dict[cell.id]['growthRate']
-    print(cell.growthRate)
     cell.rfp_intensity = rfp_intensities[cell.cellType]
     cell.gfp_intensity = gfp_intensities[cell.cellType]
     cell.color = colors[cell.cellType]
@@ -100,7 +100,6 @@ def init(cell):
 
 
 def update(sim, cells):
-    sim.hgt_events[sim.stepNum] = {'donor_id': [], 'recip_id': []}
 
     for (id, cell) in cells.items():
         # Cell removal and division
@@ -111,10 +110,7 @@ def update(sim, cells):
         
         # Conjugation
         conjugation_modules.conjugation_basic(sim, cells, cell, conj_freq, dt, rfp_intensities, colors)
-        
-    if sim.hgt_events[sim.stepNum] == {'donor_id': [], 'recip_id': []}:
-        del sim.hgt_events[sim.stepNum]
-        
+          
 
 def divide(parent, d1, d2):
     # Specify target cell size that triggers cell division
