@@ -24,9 +24,8 @@ TODO: get the following cell data (see def draw_cells(self) in Draw2DPDF.py) fro
 import sys
 import os
 import pickle
-import CellModeller
 
-fname = 'step-00500.pickle'
+fname = 'test_contact.pickle'
 data = pickle.load(open(fname,'rb'))
 
 cs = data['cellStates']
@@ -42,7 +41,11 @@ for it in cs:
 modname = data['moduleName']
 moduleStr = data['moduleStr']
 
-print(cs[9])
-
 print(cs)
-print(growth_rate)
+
+#print attribute values for one cell
+index = next(iter(cs))
+print(vars(cs[index]))
+
+lineage = data['lineage']
+print(lineage)

@@ -20,6 +20,18 @@ def create_pickle_list(directory):
         if file.endswith(".pickle"):
             pickle_list.append(file)
     return pickle_list
+
+def load_data(file_dir, pickle_file):
+    """
+    Loads data from a pickle file.
+    
+    @param  file_dir    directory containing all pickle_files
+    @param  pickle_file pickle_file name
+    @return cellStates  cellStates for the given pickle file       
+    """
+    pickle_full_path = os.path.join(file_dir, pickle_file)
+    data = pickle.load(open(pickle_full_path, 'rb'))
+    return data
     
 def load_cellStates(file_dir, pickle_file, load_data='cellStates'):
     """

@@ -26,7 +26,7 @@ def setup(sim):
     # Add some objects to draw the models
     therenderer = Renderers.GLBacteriumRenderer(sim)
     sim.addRenderer(therenderer)
-    sim.pickleSteps = 20
+    sim.pickleSteps = 5
 
 def init(cell):
     # Specify mean and distribution of initial cell size

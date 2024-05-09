@@ -16,8 +16,7 @@ sys.path.append(os.path.join(os.path.expanduser('~'), 'CellModeller/Scripts/summ
 import anisotropy
 import aspect_ratio
 import density_calculation
-import growth_rate_stats
-import spatial_analysis
+import growth_rate_analysis2
 sys.path.append(os.path.join(os.path.expanduser('~'), 'CellModeller/Scripts/summaryStatistics/'))
 import helperFunctions
 
@@ -53,10 +52,10 @@ def run_model(parameters):
     
     # Calculate summary statistics
     summary_stats = {}
-    summary_stats['gr_vs_centroid'] = spatial_analysis.get_growth_rate_vs_position(dt, cells, bin_radius=4)
-    summary_stats['density_parameter'] = density_calculation.main(cells, fig_export_path='')
+    summary_stats['knee'], summary_stats['A'], summary_stats['K'], summary_stats['C'] = growth_rate_analysis2.get_growth_rate_vs_position_parameter(cells, dt, bin_radius=2)
+    summary_stats['density_parameter'] = density_calculation.main(cells)
     summary_stats['order_parameter'] = anisotropy.main(cells)
-    summary_stats['aspect_ratio'] = aspect_ratio.get_aspect_ratio(cells)
+    summary_stats['aspect_ratio'] = aspect_ratio.main(cells)
     
     return summary_stats
 
@@ -111,12 +110,13 @@ def write_to_pickle(data, file_name):
 
 def main():
     # Define parametric space
-    gamma = np.array([0.1, 1, 10, 20, 50, 100, 1000])
+    gamma = np.array([1, 10, 50, 100, 1000])
     reg_param = 1.0/gamma
     
     # Sensitivity analysis
     df = pd.DataFrame(columns=['gamma', 'reg_param', 
-                                'gr_vs_centroid', 
+                                'knee',
+                                'growth_rate_vs_dist', 
                                 'density_parameter', 
                                 'order_parameter',
                                 'aspect_ratio'])
@@ -134,7 +134,8 @@ def main():
                 summary_stat_dict = run_model(parameters)
             except:
                 print(f"Run failed with params: gamma = {gamma_i}, reg_param = {reg_param_j}")
-                summary_stat_dict = {'gr_vs_centroid': 0, 
+                summary_stat_dict = {'growth_rate_vs_dist': 0, 
+                                     'knee': 0,
                                      'density_parameter': 0, 
                                      'order_parameter': 0, 
                                      'aspect_ratio': 0}
@@ -144,7 +145,8 @@ def main():
             
             # Store in df
             new_row = pd.DataFrame({'gamma': gamma_i, 'reg_param': reg_param_j, 
-                                    'gr_vs_centroid': summary_stat_dict['gr_vs_centroid'],
+                                    'knee': summary_stat_dict['knee'],
+                                    'growth_rate_vs_dist': summary_stat_dict['K'],
                                     'density_parameter': summary_stat_dict['density_parameter'],
                                     'order_parameter': summary_stat_dict['order_parameter'],
                                     'aspect_ratio': summary_stat_dict['aspect_ratio']
@@ -156,7 +158,7 @@ def main():
             #df = df.concat([df, new_row], ignore_index=True)
     
     # Store df in pickle file        
-    write_to_pickle(df, 'sensitivity_analysis_results.pickle')
+    write_to_pickle(df, 'sensitivity_analysis_results3.pickle')
 
 # Make sure we are running as a script
 if __name__ == "__main__": 

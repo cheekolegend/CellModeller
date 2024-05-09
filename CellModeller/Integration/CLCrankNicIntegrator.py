@@ -197,6 +197,10 @@ class CLCrankNicIntegrator:
         self.celltype = numpy.zeros((self.maxCells,),dtype=numpy.int32)
         self.celltype_dev = cl_array.zeros(self.queue, (self.maxCells,),dtype=numpy.int32)
         #self.pos_dev = cl_array.zeros(self.queue, (self.maxCells,), dtype=vec.float4)
+        
+        # Enable using effGrowth in calculations -AY
+        self.effgrow = numpy.zeros((self.maxCells,), dtype=numpy.float32)
+        self.effgrow_dev = cl_array.zeros(self.queue, (self.maxCells,), dtype=numpy.float32)
 
     def initKernels(self):
         # Get user defined kernel source
@@ -252,6 +256,7 @@ class CLCrankNicIntegrator:
                                   self.sim.phys.cell_areas_dev.data,
                                   self.sim.phys.cell_vols_dev.data,
                                   self.celltype_dev.data,
+                                  self.effgrow_dev.data,
                                   self.specLevel_dev.data,
                                   self.cellSigLevels_dev.data,
                                   self.specRate_dev.data).wait()
@@ -307,6 +312,12 @@ class CLCrankNicIntegrator:
                     + "::maxCells (" + self.maxCells + ")")
 
         self.dataLen = self.signalDataLen + self.nCells*self.nSpecies
+        
+        # Get effGrowth -AY
+        cs = self.cellStates
+        for id,c in list(cs.items()):
+            self.effgrow[c.idx] = numpy.float32(c.growthRate)
+        self.effgrow_dev.set(self.effgrow)
 
         # growth dilution of species
         self.diluteSpecies()

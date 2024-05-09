@@ -1,107 +1,127 @@
 # Standard modules
 import math
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-import os
-import pandas as pd
-import pickle
 import sys
 
 # Installed modules
 import CellModeller
-from kneed import KneeLocator
+from scipy.optimize import minimize_scalar, curve_fit, root
 from sklearn.linear_model import LinearRegression
 
 # Local/custom modules
 from lje.src.lownerJohnEllipse import plot_ellipse, welzl
+
+"""
+The ellipse is rotated to get it in form of a standard, translated ellipse. 
+The displacement of the ellipse center due to rotation is accounted for.
+
+Algorithm for getting distance to edge:
+1. Setup distance equation from arbitrary point to ellipse f(x)
+2. Minimize the function
+"""
+
+'''
+Math to find shortest distance to ellipse edge
+'''
+def rotate_point(p, theta):
+    """
+    Rotate a point p by angle theta
+    
+    @param  p           point with coordinates [x,y]
+    @param  theta       angle of rotation (radians)
+    @return p_rotated   point rotated by rotation matrix
+    """
+    p_rotated = [p[0]*np.cos(theta) - p[1]*np.sin(theta), 
+                 p[0]*np.sin(theta) + p[1]*np.cos(theta)]
+    
+    return p_rotated
    
-def get_radial_position(cell, centerX, centerY):
+def distance2_func(t, *data):
     """
-    Convert cell position to radial coordinates relative to colony centroid
+    Distance squared function of a standard, translated ellipse:
+    x = x_shift + a*cos(t)
+    y = y_shift + b*sin(t)
+    0 <= t <=2*pi 
     
-    @param  cell    cellStates object
-    @param  centerX X-coordinate of colony centroid
-    @param  centerY Y-coordinate of colony centroid
-    @return r       Radial position of cell relative to colony centroid
+    @param  t       independent variable for parametric equations
+    @param  *data   rotated_center, major, minor, rotated_cell_centroid
+    @return d2      distance squared
     """
+    # unpack the data
+    rotated_center, major, minor, rotated_cell_centroid = data 
     
-    r = math.sqrt((cell.pos[0] - centerX)**2 + (cell.pos[1] - centerY)**2)
-    return r
+    # Parameters for equation of a line
+    x0 = rotated_cell_centroid[0]
+    y0 = rotated_cell_centroid[1]
     
-def define_bin_ranges(bin_radius, r):
+    # Shift in center
+    h = rotated_center[0] #shift in x
+    k = rotated_center[1] #shift in y
+    
+    # Parametric form of ellipse equation
+    x = h + major*np.cos(t)
+    y = k + minor*np.sin(t)
+    
+    # Distance squared
+    d2 = (x0 - x)**2 + (y0 - y)**2
+    
+    return d2
+    
+def get_optimum_point(center, major, minor, theta, cell_centroid):
     """
-    Define the radial ranges for bins to group cells by.
+    Find the point on ellipse boundary closest to a bacterium.
+    1. Rotate cell centroid and ellipse translation.
+    2. Minimize distance squared function.
+    3. Output point on ellipse with minimum distance to the bacterium. 
     
-    @param  bin_radius  Length of the annuli to group cells by
-    @param  r           Radial distance from centroid (nparray)
-    @return bin_ranges  Bin intervals (distances) to average over (nparray)
+    @param  center          x,y coordinates of the ellipse center
+    @param  major           major axis length of ellipse
+    @param  minor           minor axis length of ellipse
+    @param  theta           angle of rotation of ellipse (radians)
+    @param  cell_centroid   x,y coordinates of bacterium
+    @return optimum_point   point on ellipse boundary closest to the bacterium [x, y]
     """
-    # Get upper bound for the colony radius
-    max_r = round(np.max(r))
+    # Rotate cell centroid and ellipse center to put in standard form
+    rotated_cell_centroid = rotate_point(cell_centroid, -theta)
+    rotated_center = rotate_point(center, -theta)
     
-    # Creat bin ranges
-    bin_ranges = np.arange(0, math.ceil(max_r), bin_radius) #0-10, 10-20, etc.
+    # Find minimum for distance squared functions
+    function_inputs = (rotated_center, major, minor, rotated_cell_centroid)
+    lb = 0
+    ub = 2*math.pi
+    options = {'maxiter': 1000}
+    sol = minimize_scalar(distance2_func, method='Bounded', bounds=[lb,ub], args = function_inputs, options=options)
+    t = sol.x
+
+    # Getting coordinates of optimum point
+    optimum_point_std = [rotated_center[0] + major*np.cos(t), rotated_center[1] + minor*np.sin(t)]
+    optimum_point = rotate_point(optimum_point_std, theta)
     
-    return bin_ranges
+    return optimum_point
     
-def bin_by_radius(r, measurement, bin_radius, centerX, centerY):
-    """
-    Place cell measurements into bins based on radial position in a colony
-    
-    @param  r           nparray of radial distances from colony centroid
-    @param  measurement measurement of interest (float)
-    @param  bin_radius  Thickness of band to average over (um)
-    @param  centerX     Center of colony (X-coord)
-    @param  centerY     Center of colony (Y-coord)
-    @return df          dataFrame containing: ['Radius'], ['Measurement'], ['bin']
-    """ 
-    # Assign bins to each r and measurement
-    bin_ranges = define_bin_ranges(bin_radius, r)
-    bin_indices = np.digitize(r, bin_ranges) #Allocate each r to a bin number; first bin = 1 #https://www.adamsmith.haus/python/answers/how-to-put-data-into-bins-using-numpy-in-python
-    
-    # Create a dataFrame of radial position, measurement, and bin index
-    df = pd.DataFrame()
-    df['Radius'] = r.tolist()
-    df['Growth Rate'] = measurement.tolist()
-    df['bin'] = bin_indices.tolist()
-    
-    return df
-    
-def get_binned_statistics(df):
-    """
-    Calculate the mean and standard deviation of binned data
-    
-    @param  df          dataFrame with a column ['bin']; the column contains integers
-    @return mean, std   Group dataFrames: mean and standard deviation of measurements (float)
-    """
-    # Group each cell by bin
-    df_groupby_bin = df.groupby(df['bin'])
-    
-    # Calculate statistics for all other measurements
-    mean = df_groupby_bin.mean()
-    std = df_groupby_bin.std()
-    
-    return mean, std
-    
+'''
+Filtering and data fetching
+'''
 def filter_by_cell_age(cells, min_age=2):
     """
-    Create a dict with cells that have age >= min_age
+    Create a dict with cells that have age >= min_age.
     
     @param  cells               cellStates dict
     @param  min_age             minimum age to include cell in the filtered list; recommended age is 2
     @return filtered_cellstates cellStates dict with cells filtered by age
     """
+    
     filtered_cellstates = {}
     for i, cell in cells.items():
         if cell.cellAge >= min_age:
             filtered_cellstates[i] = cell
-    
+
     return filtered_cellstates
     
 def get_all_centroids(cells):
     """
-    Obtain centroids for all cells
+    Obtain centroids for all cells.
     
     @param  cells           cellStates dict
     @return all_centroids   nparray (n_cells, 2) of cell centroids
@@ -119,7 +139,7 @@ def get_all_centroids(cells):
     
 def get_colony_centroid(cells):
     '''
-    Fit an ellipse around colony using the welzl function
+    Fit an ellipse around colony using the welzl function.
     
     @param  cells            cellStates dict
     @return centerX, centerY colony centroid coordinates [x0, y0]
@@ -139,33 +159,18 @@ def get_colony_centroid(cells):
     
     return centerX, centerY   
     
-def find_knee(x, y, curvature_type="convex", direction_type="increasing"):
+'''
+Regression
+'''    
+def perform_linear_regression(x, y):
     """
-    Finds point of maximum curvature in x, y data
-    https://raghavan.usc.edu/papers/kneedle-simplex11.pdf
-    https://pypi.org/project/kneed
-    
-    @param  x               X-coordinates of data
-    @param  y               Y-coordinates of data
-    @param  curvature_type  (string) "convex" or "concave"  
-    @param  direction_type  (string) "increasing" or "decreasing"
-    @return knee            X-coordinate of the knee
-    """
-    
-    kneedle = KneeLocator(x, y, S=1.0, curve=curvature_type, direction=direction_type)
-    knee = kneedle.knee
-    
-    return knee
-    
-def fit_line(x, y):
-    """
-    Fit a line to [x, y] data. Get regression coefficients and R^2.
+    Fit a line to [x, y] data. Get regression coefficients and R**2.
     
     @param  x           (1D nparray) X data
     @param  y           (1D nparray) Y data
     @return slope       Slope of linear fit
     @return intercept   Intercept of linear fit
-    @return r_squared   R^2 of linear fit
+    @return r_squared   R**2 of linear fit
     """
     # Necessary to reshape data for LinearRegression model
     x_reshape = x.reshape((-1,1))
@@ -180,68 +185,166 @@ def fit_line(x, y):
     
     return slope, intercept, r_squared
     
-def main(cells, dt, bin_radius=4):
+def exp_func(t, K):
     """
-    The main function.
-    Calculates the slope of growth_rate vs. radial cell position in the colony in growth portions of the colony.
-    This function is to be called by pyabc.
+    Standard negative exponential function
+    """
+    return np.exp(-K * t)
     
-    @param  dt          Time step
-    @param  bin_radius  Width to perform radial average in um (int)
-    @param  cells       cellStates dict
-    @return slope       Slope of growth_rate vs. position in colony
+def fit_exp(t, y):
     """
-    # Get colony centroid
-    centerX, centerY = get_colony_centroid(cells)
+    Fit exponential function to data
+    """
+    opt_parms, parm_cov = curve_fit(exp_func, t, y, maxfev=10000)
+    K = opt_parms
+    
+    return K   
+    
+"""
+Main function
+"""
+def get_growth_parameter(cells, dt, show_plots=False):
+    """
+    The main function that fits the parameter describing growth vs. distance to colony border.
+    
+    @param  cells       cellStates dict
+    @param  dt          simulation time step
+    @param  show_plots  allows showing plots; set to True for viewing
+    @return K           parameter describing decay in growth rate vs distance
+    """
+    # Fit ellipse     
+    cell_centroids = get_all_centroids(cells)
+    if len(cells.keys()) >= 1000:
+        sys.setrecursionlimit(10000) # necessary to run welzl for colonies with n_cells > 1000  
+    center, major, minor, theta = welzl(cell_centroids)  
     
     # Filter cells by age to exclude cells that were just born
     cells_filtered = filter_by_cell_age(cells, min_age=2)
     
     # Initialize storage variables
-    r = np.zeros(len(cells_filtered))
+    d = np.zeros(len(cells_filtered)) # distance to ellipse boundary
     growth_rate = np.zeros(len(cells_filtered))
+    points = []
     
     # Collect radial positions and growth rates
     for i, cell in enumerate(cells_filtered.values()):
-        r[i] = get_radial_position(cell, centerX, centerY)
-        growth_rate[i] = cell.strainRate_rolling/dt #cell.normalized_growth_rate
+        cell_centroid = [cell.pos[0], cell.pos[1]]
+        optimum_point = get_optimum_point(center, major, minor, theta, cell_centroid)
+        points.append(optimum_point)
+        d[i] = math.dist(optimum_point, cell_centroid)
+        growth_rate[i] = cell.strainRate_rolling/dt / cell.growthRate # growth rate normalized to max_growth
         if math.isnan(growth_rate[i]):
             growth_rate[i] = 0
-    
-    # Create a dataFrame with each cell placed in a bin corresponding to radial position
-    df = bin_by_radius(r, growth_rate, bin_radius, centerX, centerY)
-    
-    # Calculate statistics of binned measurements
-    mean_df, std_df = get_binned_statistics(df)   
-    
-    # Get bin ranges for plotting purposes
-    bin_ranges = define_bin_ranges(bin_radius, r)
-        
-    # Find knee, then get range of points to fit line
-    knee = find_knee(bin_ranges, mean_df['Growth Rate'])
-    try:
-        knee_index = np.where(bin_ranges == knee)[0][0] 
-    except:
-        print("No knee, fit to entire curve")
-        knee_index = 0
-    bin_ranges_linear = bin_ranges[knee_index:]
-    growth_rate_linear = mean_df['Growth Rate'].to_numpy()[knee_index:]
-    
-    # Fit line
-    slope, intercept, r_squared = fit_line(bin_ranges_linear, growth_rate_linear)
-    
-    return slope
 
-if __name__ == "__main__":
-    '''
-    For testing purposes only
-    '''
-    dt = 0.02
+    # Perform regression
+    K = fit_exp(d, growth_rate)
     
-    # Load cellStates
-    pickle_full_path = 'step-00420.pickle'
-    data = pickle.load(open(pickle_full_path, 'rb'))
-    cells = data['cellStates']   
+    if show_plots:
+        d_plot = np.linspace(0, np.max(d), num=100)
+        linear_fit = exp_func(d_plot, K)
+        
+        # Show fit to data
+        plt.figure(0)
+        plt.scatter(d, growth_rate, s=4)
+        plt.plot(d_plot, linear_fit, '--k', label='Linear fit')
+        plt.xlabel('Distance to ellipse boundary (um)')
+        plt.ylabel('Normalized growth rate')
+        
+        # Show minimum distances
+        fig = plt.figure(1)
+        ax = fig.add_subplot()
+        ellipse = (center, major, minor, theta)
+        show_ellipse_plot(ellipse, cell_centroids)
+        plot_min_distances(cells_filtered, points)
+        ax.axis('square')
+
+        orthogonality = test_orthogonality(center, major, minor, theta, cells_filtered, points)
+        print(f'Mean of dot products between cell-to-ellipse vector and ellipse tangent = {orthogonality}')
+        
+        plt.show()
+     
+    return K
     
-    slope = main(cells, dt)
-    print(slope)
+"""
+Extra functions for testing and visualization
+"""    
+def show_ellipse_plot(ellipse, centroids):
+    """
+    Plot the fitted ellipse with individual cells as points
+    
+    @param ellipse      tuple (center, major, minor, theta)
+    @param centroids    2D array containing x, y coordinates of each cell
+    """
+    plot_ellipse(ellipse, str='k--')
+    plt.scatter(centroids[:, 0], centroids[:, 1])
+        
+def plot_min_distances(cells, points):
+    """
+    Plot lines from cells to points
+    """  
+    for i, cell in enumerate(cells.values()):
+        x = [cell.pos[0], points[i][0]]
+        y = [cell.pos[1], points[i][1]]
+        plt.plot(x, y)
+        
+def test_orthogonality(center, major, minor, theta, cells, opt_points):
+    """
+    For each cell, perform the dot product between the (1) vector pointing from a cell to 
+    the closest point on ellipse boundary and (2) vector tangent to the ellipse. 
+    The lines should be perpendicular if the point on the ellipse boundary has the minimum
+    distance from the cell.
+    
+    Expected result: v_cell_to_point \cdot v_tangent_at_point = 0
+    
+    @param  center          x,y coordinates of the ellipse center
+    @param  major           major axis length of ellipse
+    @param  minor           minor axis length of ellipse
+    @param  theta           angle of rotation of ellipse (radians)
+    @param  cells           cellStates dict
+    @return opt_points      list of point on ellipse boundary closest to the bacterium [x, y]
+                            (in same order as the cellStates dict)
+    """
+    # Rotate ellipse translation coordinates
+    center = rotate_point(center, -theta)
+    
+    # Loop to calculate orthogonality for each cell and optimum point
+    orthogonality = []
+    for i, cell in enumerate(cells.values()):
+        # Collect coordinates
+        ellipse_x = opt_points[i][0]
+        ellipse_y = opt_points[i][1]
+        cell_x = cell.pos[0]
+        cell_y = cell.pos[1]
+        
+        # Rotate by -theta to get into std form
+        rotated_point = rotate_point(opt_points[i], -theta)
+        rotated_cell_centroid = rotate_point([cell_x, cell_y], -theta)
+        
+        # Calculate t given x and y
+        t = np.arctan(major/minor*(rotated_point[1] - center[1])/(rotated_point[0] - center[0]))
+        
+        # Get derivatives wrt t
+        dydt = minor*np.cos(t)
+        dxdt = -major*np.sin(t)
+        
+        # Calculate dy/dx by doing dy/dt / dx/dt
+        dydx = dydt/dxdt
+        
+        # Define vector for ellipse
+        ellipse_tangent = [1, dydx] 
+        
+        # Get vector from cell to opt_point
+        line_x = rotated_cell_centroid[0] - rotated_point[0]
+        line_y = rotated_cell_centroid[1]  - rotated_point[1]
+        point_to_ellipse = [line_x, line_y]
+        
+        # v_cell_to_point \cdot v_tangent_at_point
+        orthogonality.append(np.dot(ellipse_tangent, point_to_ellipse))
+    
+    # Uncomment to see all dot products
+    '''
+    for val in orthogonality:
+        print(f'Dot product w/ cell to optimum point and ellipse tangent = {val:.3f}')
+    '''
+        
+    return np.mean(orthogonality)

@@ -123,9 +123,13 @@ class CellModellerPDFGenerator(Canvas):
     def draw_frame(self, name, world, page, center):
         self.setup_canvas(name, world, page, center)
         #draw_chamber(c)
+        
+        '''
         if self.signals: 
             print("Drawing signals")
             self.draw_signals()
+        '''
+        
         self.draw_cells()
         self.showPage()
         self.save()
@@ -183,7 +187,7 @@ def main():
     # e.g. outline color, page size, etc.
     #
     # For now, put these options into variables here:
-    bg_color = Color(0,0,0,alpha=1.0)
+    bg_color = Color(1,1,1,alpha=1.0)
 
     # For now just assume a list of files
     infns = sys.argv[1:]
@@ -209,14 +213,17 @@ def main():
         # Get the bounding square of the colony to size the image
         # This will resize the image to fit the page...
         # ** alternatively you can specify a fixed world size here
-        '''(w,h) = pdf.computeBox()
+        
+        (w,h) = pdf.computeBox()
         sqrt2 = math.sqrt(2)
-        world = (w/sqrt2,h/sqrt2)'''
-        world = (200,200)
+        world = (w/sqrt2,h/sqrt2)
+        
+        
+        world = (80,80) #(340, 340) does ~30000 cells
 
         # Page setup
         page = (20,20)
-        center = (0,0)
+        center = (0,0) #(-8.5,-8.5)
 
         # Render pdf
         print(('Rendering PDF output to %s'%outfn))

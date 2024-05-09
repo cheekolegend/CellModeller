@@ -7,7 +7,7 @@ import math
 
 def setup(sim):
     # Set biophysics module
-    biophys = CLBacterium(sim, jitter_z=False)
+    biophys = CLBacterium(sim, jitter_z=False, max_cells=1000)
 
     # Set up regulation module
     regul = ModuleRegulator(sim, sim.moduleName)	

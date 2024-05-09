@@ -4,7 +4,7 @@ void userSignalRates(float gridVolume, float area, float volume, const int cellT
 {
     %(sigKernel)s
 }
-void userSpecRates(float gridVolume, float area, float volume, const int cellType, __global float* rates, __global float* species, __global const float* signals)
+void userSpecRates(float gridVolume, float area, float volume, const int cellType, const float effGrowth, __global float* rates, __global float* species, __global const float* signals) // added effGrowth -AY
 {
     %(specKernel)s
 }
@@ -113,6 +113,7 @@ __kernel void speciesRates(const int numSignals,
                            __global const float* areas,
                            __global const float* volumes,
                            __global const int* celltype,
+                           __global const float* effGrow, // effGrow added by -AY
                            __global const float* cellSpecLevels,
                            __global const float* cellSignalLevels,
                            __global float* specRate)
@@ -125,7 +126,7 @@ __kernel void speciesRates(const int numSignals,
     __global const float* signals = cellSignalLevels+sigbase;
     __global float* rates = specRate+specbase;
 
-    userSpecRates(gridVolume, areas[id], volumes[id], cellType, rates, species, signals);
+    userSpecRates(gridVolume, areas[id], volumes[id], cellType, effGrow[id], rates, species, signals);
 }
 
 
@@ -276,6 +277,7 @@ __kernel void speciesRatesImplicit(const int numSignals,
                                    __global const float* areas,
                                    __global const float* volumes,
                                    __global const int* celltype,
+                                   __global const float* effGrow, // effGrow added by -AY
                                    __global float* cellSpecLevels,
                                    __global const float* cellSignalLevels,
                                    __global float* specRate)
@@ -288,7 +290,7 @@ __kernel void speciesRatesImplicit(const int numSignals,
     __global const float* signals = cellSignalLevels+sigbase;
     __global float* rates = specRate+specbase;
 
-    userSpecRates(gridVolume, areas[id], volumes[id], cellType, rates, species, signals);
+    userSpecRates(gridVolume, areas[id], volumes[id], cellType, effGrow[id], rates, species, signals);
 }
 
 __kernel void signalRatesImplicit(const int numSignals,

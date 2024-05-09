@@ -18,7 +18,6 @@ import os
 import sys
 import pickle
 from CellModeller.VTPWriter import *
-#sys.path.append('/Users/user/miniconda/lib/python2.7/site-packages/CellModeller/')
 
 # mesh resolution - higher values take longer to write but look better
 num_points = 8

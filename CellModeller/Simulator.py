@@ -467,8 +467,8 @@ A function called setparams must be included in the module file, and the paramet
         data['moduleStr'] = self.moduleOutput
         data['moduleName'] = self.moduleName
         
-        if self.hgt_events: #-AY
-            data['hgt_events'] = self.hgt_events
+        #if self.hgt_events: #-AY
+        data['hgt_events'] = self.hgt_events
             
         if self.integ:
         #    print("Writing new pickle format")

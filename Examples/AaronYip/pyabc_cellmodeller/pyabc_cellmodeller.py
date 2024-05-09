@@ -63,10 +63,17 @@ if __name__ == '__main__':
     prior = pyabc.Distribution(mu=pyabc.RV("uniform", lower_bound, scale))
     
     # Define ABC-SMC settings
-    abc = pyabc.ABCSMC(model, prior, distance, population_size=10)
+    n_cores = 8  
+    abc = pyabc.ABCSMC(model, 
+                       prior, 
+                       distance, 
+                       population_size=10, 
+                       sampler=pyabc.sampler.MulticoreEvalParallelSampler(n_cores))
     db_path = "results.db"
     observation = 0.8
     abc.new("sqlite:///" + db_path, {"data": observation})
     
-    # Run  
-    history = abc.run(minimum_epsilon=0.05, max_nr_populations=10) 
+    # Run
+    
+    history = abc.run(minimum_epsilon=0.05, 
+                      max_nr_populations=10) 

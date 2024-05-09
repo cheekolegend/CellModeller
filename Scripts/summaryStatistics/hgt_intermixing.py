@@ -16,7 +16,7 @@ def main(file_dir_path=''):
     # Reading files and paths
     if not file_dir_path:
         file_dir_path = sys.argv[1] 
-    output_file = os.path.join(file_dir_path, 'intermixing_hgt.csv')
+    output_file = os.path.join(file_dir_path, 'hgt_intermixing.csv')
     
     # Process data
     pickle_list = create_pickle_list(file_dir_path)
@@ -31,6 +31,7 @@ def main(file_dir_path=''):
               'Average Neighbours',
               'HGT Events',
               'Conj. Eff.',
+              'Entropy Score'
               ]
               
     with open (output_file, 'w', newline = '') as csvfile:
@@ -63,6 +64,7 @@ def main(file_dir_path=''):
             contagion = intermixing.contagion_index(entropy, t)
             max_entropy = intermixing.calc_max_entropy(t)
             avg_neighbours = intermixing.mean_degree(G)
+            entropy_score = entropy/max_entropy
             
             # Count populations
             populations = count_cell_types(cells, max_cell_type)
@@ -81,7 +83,8 @@ def main(file_dir_path=''):
                  contagion,
                  avg_neighbours,
                  hgt_events,
-                 hgt_efficiency
+                 hgt_efficiency,
+                 entropy_score
                  ), axis = None)) 
                  
 def adjust_cell_types(G, recip_types=[1], trans_types=[2]):

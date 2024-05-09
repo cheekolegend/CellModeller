@@ -3,7 +3,8 @@ import os
 import pickle
 import CellModeller
 import networkx as nx
-from helperFunctions import create_pickle_list, get_max_cell_type, load_cellStates, read_time_step, generate_network
+from .helperFunctions import create_pickle_list, get_max_cell_type, load_cellStates, read_time_step, generate_network
+#from helperFunctions import create_pickle_list, get_max_cell_type, load_cellStates, read_time_step, generate_network
 import csv
 import math
 import numpy as np

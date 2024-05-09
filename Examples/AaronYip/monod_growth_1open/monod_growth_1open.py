@@ -56,19 +56,19 @@ num_x = 10.0
 num_y = 10.0
 
 # Picklesteps
-save_every = 20
+save_every = 10
 
 # Growth variables; arbitrarily chosen for now
 sim_mu_max = 1.0
 sim_K = 0.2
-sim_D = 5.0*math.pow(10,3) #um2/h
+sim_D = 2.5*math.pow(10,3) #um2/h
 
 def setup(sim):
     # Set biophysics, signalling, and regulation models
-    sim.dt = 0.025
+    sim.dt = 0.02
     
-    friction_factor = 20 #default is 10
-    biophys = CLBacterium(sim, jitter_z=False, max_planes=3, gamma=friction_factor, max_cells=10000)
+    friction_factor = 1e6 #default is 10
+    biophys = CLBacterium(sim, jitter_z=False, max_planes=3, gamma=friction_factor, max_cells=5000)
     
     # Solver parameters:
     # u0 = Field concentration at open boundaries

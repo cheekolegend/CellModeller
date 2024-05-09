@@ -3,6 +3,7 @@ This module contains general functions for working with summary statistic data
 Import modules and add functions as necessary.
 """
 
+import glob
 import os
 import pickle
 import re #read regex
@@ -15,12 +16,23 @@ def create_pickle_list(directory):
     @param  directory   string containing .pickle files
     @return pickle_list list of .pickle files
     """
+    
     pickle_list = []
     for file in sorted(os.listdir(directory)):
         if file.endswith(".pickle"):
             pickle_list.append(file)
     return pickle_list
     
+def create_pickle_list_full_path(directory):   
+    """
+    Creates a list of pickle file names with structure "directory/step-xxxx.pickle"
+    
+    @param  directory   string containing .pickle files
+    @return pickle_list list of .pickle files
+    """
+    pickle_list = [pickle_file for pickle_file in glob.glob(directory + "/*.pickle")]
+    return pickle_list
+
 def load_cellStates(file_dir, pickle_file):
     """
     Loads cellStates data from a pickle file.
@@ -31,6 +43,18 @@ def load_cellStates(file_dir, pickle_file):
     """
     pickle_full_path = os.path.join(file_dir, pickle_file)
     data = pickle.load(open(pickle_full_path, 'rb'))
+    cells = data['cellStates']
+    
+    return cells
+    
+def load_cellStates_full_path(pickle_file_full_path):
+    """
+    Loads cellStates data from a pickle file given the full path.
+    
+    @param  pickle_file_full_path   full path to a .pickle file
+    @return cellStates              cellStates for the given pickle file       
+    """
+    data = pickle.load(open(pickle_file_full_path, 'rb'))
     cells = data['cellStates']
     
     return cells

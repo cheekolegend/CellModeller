@@ -7,8 +7,6 @@ import re
 
 from CellModeller.Simulator import Simulator
 
-dt_default = 0.025
-
 def simulate(modfilename):
     (path,name) = os.path.split(modfilename)
     modname = str(name).split('.')[0]
@@ -18,7 +16,7 @@ def simulate(modfilename):
     sim_file = os.path.abspath(modfilename)
     (dt, sim_time) = sim_time_parameters(sim_file)
 
-    sim = Simulator(modname, dt_default, saveOutput = True)
+    sim = Simulator(modname, dt, saveOutput = True)
     while sim.stepNum*dt <= sim_time:
         sim.step()
         

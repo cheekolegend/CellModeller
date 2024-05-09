@@ -7,6 +7,33 @@ import pickle
 import CellModeller
 import matplotlib.pyplot as plt
 
+def velocity_vectors(cells):
+    """
+    1. Get cell centers for start of arrows
+    2. Get x and y velocity component for each cell
+    3. Get color for each cell
+    3. Convert cell centers to a meshgrid
+    4. Velocity components need to line up with meshgrid
+    5. Plot using quiver: https://pythonforundergradengineers.com/quiver-plot-with-matplotlib-and-jupyter-notebooks.html
+    """
+    x = np.zeros(len(cells))
+    y = np.zeros(len(cells))
+    v_x = np.zeros(len(cells))
+    v_y = np.zeros(len(cells))
+    color = [0]*len(cells)
+    for i, cell in enumerate(cells.values()):
+        x[i] = cell.pos[0]
+        y[i] = cell.pos[1]
+        v_x[i] = cell.vel[0]
+        v_y[i] = cell.vel[1]
+        color[i] = tuple(cell.color)
+    
+    fig, ax = plt.subplots(figsize=(14, 8))
+    ax.quiver(x, y, v_x, v_y, color=color)
+    
+    return fig, ax
+    
+
 pname= sys.argv[1]
 print(('opening '+ pname))
 fout=open('spatial.txt', "w")

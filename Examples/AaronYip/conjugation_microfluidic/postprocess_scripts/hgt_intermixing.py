@@ -3,9 +3,10 @@ import os
 import pickle
 import CellModeller
 import networkx as nx
-from helperFunctions import create_pickle_list, get_max_cell_type, load_cellStates, read_time_step, generate_network
-import intermixing
-import hgt
+from .helperFunctions import create_pickle_list, get_max_cell_type, load_cellStates, load_data, read_time_step, generate_network
+from . import intermixing, hgt
+#from helperFunctions import create_pickle_list, get_max_cell_type, load_cellStates, read_time_step, generate_network
+#import intermixing, hgt
 import csv
 import math
 import numpy as np
@@ -16,25 +17,19 @@ def main(file_dir_path='', dt=1/60):
     # Reading files and paths
     if not file_dir_path:
         file_dir_path = sys.argv[1] 
-    output_file = os.path.join(file_dir_path, 'intermixing_hgt.csv')
     
     # Process data
     pickle_list = create_pickle_list(file_dir_path)
-                  
-    # Get max_cell_type from final step
-    final_step = pickle_list[-1]
-    cells = load_cellStates(file_dir_path, final_step)
-    
     
     df = pd.DataFrame()
     
     # Loop through all time steps
     for file in pickle_list:
-        cells = load_cellStates(file_dir_path, file, load_data='cellStates')
-        hgt_events_data = load_cellStates(file_dir_path, file, load_data='hgt_events') # {'stepNum:'}
-        stepNum = read_time_step(file)
+        data = load_data(file_dir_path, file)
+        cells = data['cellStates']
+        hgt_events_data = data['hgt_events']
+        stepNum = data['stepNum']
         time = stepNum*dt
-        print('Reading step ', stepNum)
         
         # Generate network
         G = generate_network(cells)
@@ -64,13 +59,13 @@ def main(file_dir_path='', dt=1/60):
                        'donors': count_cellTypes_list['donor'], 
                        'recips': count_cellTypes_list['recip'],
                        'trans': count_cellTypes_list['trans'],
-                       'entropy': intermixing_stats['entropy'],
-                       'contagion': intermixing_stats['contagion'],
-                       'avg_neighbours_donor': intermixing_stats['avg_neighbours_donor'],
-                       'avg_neighbours_recip': intermixing_stats['avg_neighbours_recip'],
-                       'avg_neighbours_trans': intermixing_stats['avg_neighbours_trans'],
+                       'entropy': intermixing_stats['entropy'][0],
+                       'contagion': intermixing_stats['contagion'][0],
+                       'avg_neighbours_donor': intermixing_stats['avg_neighbours_donor'][0],
+                       'avg_neighbours_recip': intermixing_stats['avg_neighbours_recip'][0],
+                       'avg_neighbours_trans': intermixing_stats['avg_neighbours_trans'][0],
                        }
-        df_single = pd.DataFrame(output_dict)
+        df_single = pd.DataFrame(output_dict, index=[0])
         df = pd.concat([df, df_single])
         
     # Calculated values
@@ -82,6 +77,8 @@ def main(file_dir_path='', dt=1/60):
     df['conj_per_contact_per_time'] = df['event_counts']/df['donor_trans_cts']/dt
     df['conj_efficiency'] = df['trans']/df['donor_trans_cts']
     df.replace([np.inf, -np.inf], np.nan, inplace=True)
+    
+    return df
                  
 def adjust_cell_types(G, recip_types=[1], trans_types=[2]):
     """
@@ -119,4 +116,5 @@ def count_cell_types(G, cellTypes=['donor', 'recip', 'trans']):
        
 if __name__ == "__main__":
     dt = 1/60 #h
-    main(dt=dt)
+    df = main(dt=dt)
+    print(df)

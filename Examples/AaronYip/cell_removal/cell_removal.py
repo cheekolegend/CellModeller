@@ -37,7 +37,7 @@ import math
 
 cell_cols = {0:[0,1.0,0], 1:[1.0,0,0], 2:[0,0,1.0]} #RGB cell colours
 cell_lens = {0:3.5, 1:3.5, 2:3.5} #target cell lengths
-cell_growr = {0:1, 1:1, 2:1.05} #growth rates
+cell_growr = {0:1, 1:1, 2:1} #growth rates
 
 #Geometry
 min_x = 0.0
@@ -47,7 +47,7 @@ max_y = 20.0
 
 def setup(sim):
     # Set biophysics, signalling, and regulation models
-    biophys = CLBacterium(sim, jitter_z=False, max_planes=2)
+    biophys = CLBacterium(sim, jitter_z=False, max_planes=2, max_cells=5000)
 
     # use this file for reg too
     regul = ModuleRegulator(sim, sim.moduleName)
@@ -60,9 +60,9 @@ def setup(sim):
     #biophys.addPlane((0,0,0), (0,0,+1), planeWeight)             # base
  
     # Specify the initial cell and its location in the simulation
-    sim.addCell(cellType=0, pos=(max_x/2,max_y/2,0), dir=(1,0,0))
-    sim.addCell(cellType=1, pos=(6,2,0), dir=(1,0,0))
-    sim.addCell(cellType=2, pos=(15,2,0), dir=(1,0,0))
+    sim.addCell(cellType=0, pos=(max_x/2,max_y/2,0), dir=(0,1,0))
+    sim.addCell(cellType=1, pos=(6,2,0), dir=(0,1,0))
+    sim.addCell(cellType=2, pos=(15,2,0), dir=(0,1,0))
 
 
     # Add some objects to draw the models

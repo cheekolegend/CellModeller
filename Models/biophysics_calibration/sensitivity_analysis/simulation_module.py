@@ -12,7 +12,7 @@ sim_time = 16.0
 
 def setup(sim):
     # Set biophysics module
-    biophys = CLBacterium_reg_param(sim, jitter_z=False, max_cells=5000, reg_param=reg_param, gamma=gamma)
+    biophys = CLBacterium_reg_param(sim, jitter_z=False, max_cells=2000, reg_param=reg_param, gamma=gamma)
 
     # Set up regulation module
     regul = ModuleRegulator(sim, sim.moduleName)	

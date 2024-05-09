@@ -840,6 +840,7 @@ __kernel void build_matrix(const int max_contacts,
   to_ents[i] = to_ent * stiff[i];
 }
 
+// See Section 1.2.3 in CM maths. This calculates B_a*deltap_a - B_b*deltap_b (Oct 13, 2022)
 __kernel void calculate_Bx(const int max_contacts,
                            __global const int* frs,
                            __global const int* tos,
@@ -861,7 +862,9 @@ __kernel void calculate_Bx(const int max_contacts,
   Bx[i] = res0123 + res4567;
 }
 
-
+// fr_ents = B
+// Bx = fr_ents*dp
+// Effectively A^T*A?
 __kernel void calculate_BTBx(const int max_contacts,
                              __global const int* n_cts,
                              __global const int* n_cell_tos,

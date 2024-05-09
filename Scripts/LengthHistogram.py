@@ -3,12 +3,15 @@ import os
 import math
 import numpy as np
 sys.path.append('.')
-import pickle
+import pickle as pkl
 import CellModeller
 #import matplotlib.pyplot as plt
 
+home = os.getenv("CMPATH")
+print(home)
+filepath = os.path.join(home,'data','LengthData.csv')
 file = sys.argv[1] #select pickle file in command line
-output_file = open('LengthData.csv','w')
+output_file = open(filepath,'w')
 
 
 def rad_pos(cellstate):
@@ -16,7 +19,7 @@ def rad_pos(cellstate):
 
 def lengthHist(pickle, bins, file=False):
     print(('opening '+ pickle))
-    data = pickle.load(open(pickle,'r'))
+    data = pkl.load(open(pickle,'rb'))
     cs = data['cellStates']
     it = iter(cs)
     n = len(cs)

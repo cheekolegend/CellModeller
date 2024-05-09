@@ -11,7 +11,7 @@ donor_frac = 0.25
 n_start = 60
 
 # Time settings
-dt = 1/60 #h
+dt = 0.016666667 #1/60 h
 sim_time = 24.0 #h
 
 # Morphology. Numbers taken from MG1655 sept 2022 agarose pad experiment

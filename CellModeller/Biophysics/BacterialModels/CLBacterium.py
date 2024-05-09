@@ -138,6 +138,17 @@ class CLBacterium:
         self.simulator.cellStates[cid].pos = [self.cell_centers[i][j] for j in range(3)]
         self.set_cells()
         self.updateCellState(cellState)
+    
+    '''    
+    # For rough walls. Kinda works but simulation crashes due to cell overlaps -AY
+    def fixCell(self, cellState, current_dir):
+        i = cellState.idx
+        cid = cellState.id
+        self.cell_dirs[i] = current_dir
+        self.simulator.cellStates[cid].dir = [self.cell_dirs[i][j] for j in range(3)]
+        self.set_cells()
+        self.updateCellState(cellState)
+    '''
         
     def addPlane(self, pt, norm, coeff):
         pidx = self.n_planes
@@ -701,7 +712,7 @@ class CLBacterium:
         state.dir = [self.cell_dirs[i][j] for j in range(3)]
         state.radius = self.cell_rads[i]
         state.length = self.cell_lens[i]
-        state.strainRate = (state.length - state.oldLen)/state.oldLen
+        state.strainRate = (state.length - state.oldLen)/state.oldLen       
 
         #currently the effective growth rate is calculated over the entire history of the cell
         state.effGrowth = state.effGrowth * state.cellAge + state.strainRate * state.oldLen
