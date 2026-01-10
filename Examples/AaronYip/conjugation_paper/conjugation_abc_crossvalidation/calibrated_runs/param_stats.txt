@@ -1,0 +1,17 @@
+Calibration Round 5:
+
+Mean conj_freq: 0.5142786401713151
+Std conj_freq: 0.21038782759236938
+Mean delay: 0.6288688280654475
+Std delay: 0.368673444882017
+Mean m_max: 3.0371970337762533
+Std m_max: 0.800878759134118
+Mean t_half: 0.5001704428814664
+Std t_half: 0.25439510052918013
+Mean death_rate_donor: 0.31819885071066445
+Std death_rate_donor: 0.07227907095634864
+Mean death_rate_trans: 0.26802855404172576
+Std death_rate_trans: 0.11782929171963764
+Mean death_rate_recip: 0.06508671512237757
+Std death_rate_recip: 0.04109545792044946
+

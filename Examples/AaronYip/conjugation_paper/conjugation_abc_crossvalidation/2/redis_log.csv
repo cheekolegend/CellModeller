@@ -1,0 +1,5 @@
+,t,n_evaluated,n_accepted,n_lookahead,n_lookahead_accepted,n_preliminary
+0,-1,40,40,0,0,0
+1,0,95,43,0,0,0
+2,1,103,42,9,5,9
+3,2,225,42,6,1,6
